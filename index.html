@@ -478,6 +478,79 @@ input:checked + .slider:before {
     box-shadow: 0 0 15px rgba(255, 0, 85, 0.2);
 }
 
+/* ===============================
+   Estilos do Modal Personalizado
+================================ */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(5, 5, 10, 0.8);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    animation: fadeInModal 0.3s forwards;
+}
+
+@keyframes fadeInModal {
+    to { opacity: 1; }
+}
+
+.modal-content {
+    background: rgba(20, 20, 35, 0.95);
+    border: 2px solid var(--neon-purple);
+    border-radius: 16px;
+    padding: 30px;
+    max-width: 450px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(188, 19, 254, 0.5);
+    font-family: 'Rajdhani', sans-serif;
+}
+
+.modal-title {
+    color: var(--neon-cyan);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.modal-text {
+    color: #e2e8f0;
+    font-size: 1.1rem;
+    margin-bottom: 25px;
+    font-family: 'Inter', sans-serif;
+    line-height: 1.5;
+}
+
+.modal-btn {
+    background: var(--neon-purple);
+    color: #fff;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(188, 19, 254, 0.6);
+    transition: all 0.3s ease;
+    margin-top: 0;
+    width: auto;
+}
+
+.modal-btn:hover {
+    background: var(--neon-cyan);
+    color: #000;
+    box-shadow: 0 0 25px rgba(0, 243, 255, 0.8);
+}
+
 .hidden { display: none !important; }
 
 #pdf-content {
@@ -494,7 +567,7 @@ input:checked + .slider:before {
         <span class="titulo-branco">Simulador de Economia</span><br>
         <span class="titulo-roxo">Órigo Energia | MS</span>
     </h1>
-    <div class="subtitle">Análise Computacional de Economia e Eficiência (v.3.5)</div>
+    <div class="subtitle">Análise Computacional de Economia e Eficiência (v.3.6)</div>
 </div>
 
 <div class="main-wrapper">
@@ -599,7 +672,7 @@ input:checked + .slider:before {
 <div id="pdf-content"></div>
 
 <!-- ===============================
-    Script Lógico Corrigido
+    Script Lógico Atualizado
 ================================ -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
@@ -636,6 +709,32 @@ document.addEventListener("DOMContentLoaded", () => {
     moneyFields.forEach(i => i.addEventListener("input", () => formatMoneyInput(i, 2)));
     moneyNegativeFields.forEach(i => i.addEventListener("input", () => formatMoneyNegativeInput(i, 2)));
     priceFields.forEach(i => i.addEventListener("input", () => formatMoneyInput(i, 6)));
+
+    // Função para exibir o modal de alerta de aprovação da diretoria
+    function mostrarAlertaDiretoria() {
+        if ($('customAlertModal')) return;
+        const modalOverlay = document.createElement('div');
+        modalOverlay.id = 'customAlertModal';
+        modalOverlay.className = 'modal-overlay';
+        modalOverlay.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-title">⚠️ ATENÇÃO: Aprovação da Diretoria</div>
+                <div class="modal-text">A opção de <strong>35% de desconto</strong> só será validada mediante aprovação da diretoria.</div>
+                <button class="modal-btn" id="closeModalBtn">ENTENDIDO</button>
+            </div>
+        `;
+        document.body.appendChild(modalOverlay);
+        document.getElementById('closeModalBtn').addEventListener('click', () => {
+            modalOverlay.remove();
+        });
+    }
+
+    // Monitorar alteração no select do plano para verificar se é 35%
+    $("desc").addEventListener("change", e => {
+        if (e.target.value === "35") {
+            mostrarAlertaDiretoria();
+        }
+    });
 
     document.addEventListener("keydown", e => {
         if(e.key === "Enter"){
@@ -687,7 +786,6 @@ document.addEventListener("DOMContentLoaded", () => {
     function calcular(){
         const consultorSelect = $("consultor");
         
-        // Se nenhum consultor foi selecionado, seleciona automaticamente a primeira opção válida para evitar travamento
         if(!consultorSelect.value){
             if (consultorSelect.options.length > 1) {
                 consultorSelect.selectedIndex = 1;
@@ -733,8 +831,16 @@ document.addEventListener("DOMContentLoaded", () => {
         const output = $("output");
         $("btnPdf").classList.remove("hidden");
 
+        // Informação extra para a interface se o plano for de 35%
+        const avisoDiretoriaHTML = desc === 35 ? `
+            <div style="background: rgba(255, 0, 85, 0.15); border: 1px solid var(--neon-red); border-radius: 12px; padding: 15px; text-align: center; color: var(--neon-red); font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 1.1rem; width: 100%;">
+                ⚠ ATENÇÃO: Esta função (Desconto de 35%) só será validada mediante aprovação da diretoria.
+            </div>
+        ` : '';
+
         const htmlResultados = `
             <div style="display: flex; flex-direction: column; align-items: center; gap: 16px; width: 100%;">
+                ${avisoDiretoriaHTML}
                 <div class="card" style="width: 100%;">
                     <div class="neon-orange" style="font-size: 1rem; margin-bottom: 10px;">🏢 Cenário Atual – Distribuidora</div>
                     <div class="row"><span>Consumo</span><span>R$ ${formatter.format(consumototal)}</span></div>
@@ -788,8 +894,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
         output.innerHTML = htmlResultados;
         
+        // Aviso no PDF caso seja 35%
+        const avisoPdfHTML = desc === 35 ? `
+            <div style="width: 100%; max-width: 380px; background: #fff5f5; border: 1px solid #ff0055; border-radius: 8px; padding: 8px; text-align: center; color: #ff0055; font-size: 11px; font-weight: 700; margin: 0 auto;">
+                ⚠ ATENÇÃO: Esta função (Desconto de 35%) só será validada mediante aprovação da diretoria.
+            </div>
+        ` : '';
+
         const pdfTemplateClean = `
             <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; font-family: Arial, sans-serif; color: #000; background: #fff; padding: 10px;">
+                ${avisoPdfHTML}
                 <div style="width: 100%; max-width: 380px; background: #fff; border: 1px solid #ddd; border-radius: 12px; padding: 15px; margin: 0 auto;">
                     <div style="color: #d97706; font-weight: 700; font-size: 1rem; margin-bottom: 8px;">🏢 Cenário Atual – Distribuidora</div>
                     <div style="display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; border-bottom: 1px solid #eee;"><span>Consumo</span><span>R$ ${formatter.format(consumototal)}</span></div>
